@@ -8,7 +8,8 @@ import subprocess
 def log(
         string:str, 
         logPath:plib.Path, 
-        end:str="\n"
+        verbose:bool = False,
+        end:str="\n",
     )->None:
 
     fileMode = "a"
@@ -19,19 +20,24 @@ def log(
         f.write(f"{string}")
         f.write(f"{end}")
     
+    if verbose:
+        print(f"{string}", end=end) 
+    
     return None
 
 #------------------------------------------------------------------------------
 
 def read_configs(
         configsPath: plib.Path, 
-        logPath:plib.Path
+        logPath:plib.Path,
+        verbose:bool=False
     )-> dict:
     configs:dict = {}
-    log(f"Reading congigs from {configsPath}", logPath=logPath, end="\t")
+    log(string=f"Reading congigs from {configsPath}", logPath=logPath, 
+        verbose=verbose,end="\t")
     with open(configsPath, "r") as f:
         configs.update(yml.load(f, Loader=yml.FullLoader))
-    log("Done!", logPath=logPath, end="\n")
+    log(string="Done!", logPath=logPath, verbose=verbose, end="\n")
     return configs
 
 #------------------------------------------------------------------------------
@@ -39,7 +45,8 @@ def read_configs(
 def rsync(
         source:plib.Path, 
         destination: plib.Path, options:list, 
-        logPath:plib.Path
+        logPath:plib.Path,
+        verbose=False,
     ) ->None:
 
     command = ["rsync"]
@@ -49,7 +56,7 @@ def rsync(
     command.append(str(source))
     command.append(str(destination))
 
-    log(' '.join(command), logPath=logPath)
+    log(string=' '.join(command), logPath=logPath, verbose=verbose)
 
     result = subprocess.run(
         command, 
@@ -58,18 +65,18 @@ def rsync(
         capture_output=True,
     )
 
-    log(result.stdout, logPath=logPath)
+    log(string=result.stdout, logPath=logPath, verbose=verbose)
 
 #------------------------------------------------------------------------------
 
-def run_backup(configs:dict, logPath:plib.Path)->None:
+def run_backup(configs:dict, logPath:plib.Path, verbose=False)->None:
     assert isinstance(configs, dict), f"Variable 'configs' should be a dict"
     idNames:list = list(configs.keys())
 
     offsetStr:str = "\t"
     level:int = 0
     for idName in idNames:
-        log(f"{offsetStr*level}{idName}", logPath=logPath)
+        log(f"{offsetStr*level}{idName}", logPath=logPath, verbose=verbose)
         level += 1
         for key in ["src", "dst"]:
             assert key in list(configs[idName].keys()), f"key {key} is missing in configs of {idName}"
@@ -78,53 +85,67 @@ def run_backup(configs:dict, logPath:plib.Path)->None:
         src = plib.Path(configs[idName]['src'])
         dst = plib.Path(configs[idName]['dst'])
 
-        assert src.exists(), log("does not exist", logPath=logPath)
+        assert src.exists(), f"{src} does not exist"
         if not dst.exists(): dst.mkdir(parents=True, exist_ok=False)
 
         rsyncOpts = ["-avz"]
         
-        rsync(source=src, destination=dst, options=rsyncOpts, logPath=logPath)
+        rsync(source=src, destination=dst, 
+              options=rsyncOpts, logPath=logPath,
+              verbose=verbose)
 
         level -= 1
+
     return
 
 #------------------------------------------------------------------------------
 
-def main(configsPath:plib.Path, logPath:plib.Path):
-    configs = read_configs(configsPath=configsPath, logPath=logPath)
-    run_backup(configs=configs, logPath=logPath)
+def main(configsPath:plib.Path, logPath:plib.Path, verbose=False)->None:
+    configs = read_configs(configsPath=configsPath, 
+                           logPath=logPath, 
+                           verbose=verbose)
+    run_backup(configs=configs, logPath=logPath, verbose=verbose)
+    return 
 
 #------------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    configsPath = plib.Path('~').expanduser() / "configs" / "sync_configs.yaml"
-    logPath = plib.Path('~').expanduser() / "logs" / "sync.log"
-    
+    configsPath:plib.Path = plib.Path('~').expanduser() / "configs" / "sync_configs.yaml"
+    logPath:plib.Path = plib.Path('~').expanduser() / "logs" / "sync.log"
+    verbose:bool = False
+
     for argId, arg in enumerate(sys.argv[:]):
         if arg == "--help" or arg == "-h":
             usage = """
-                    Usage:
-                        rsync --conf path/to/configfile --log path/to/logfile
-                            Read config file from path/to/configfile and log to 
-                            path/to/logfile
-                        rsync 
-                            Read configs from the default path : ~/configs/sync_configs.yaml
-                            and
-                            logs to default logfile: ~/logs/sync.log
-                    """
+            Usage:
+                pyrsync --conf path/to/configfile --log path/to/logfile
+                            OR
+                pyrsync -c path/to/configfile -l path/to/logfile
+                    Read config file from path/to/configfile and log to 
+                    path/to/logfile
+                pyrsync --verbose [options] OR pyrsync -v [options]
+                    Enable verbose with options
+                pyrsync
+                    Read configs from the default path : ~/configs/sync_configs.yaml
+                    and
+                    logs to default logfile: ~/logs/sync.log
+            """
             print(usage)
             exit(0) 
-        if arg == "--conf":
+        if arg == "--conf" or arg == "-c":
             configsPath = plib.Path(sys.argv[argId + 1])
-        if arg == "--log":
+        if arg == "--log" or arg == "-l":
             logPath = plib.Path(sys.argv[argId + 1])
+        if arg == "--verbose" or arg == "-v":
+            verbose = True
+
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
     
-    log(f"Starting: {now}", logPath=logPath)
-    main(configsPath=configsPath, logPath=logPath)
+    log(string=f"Starting: {now}", logPath=logPath, verbose=verbose)
+    main(configsPath=configsPath, logPath=logPath, verbose=verbose)
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
-    log(f"Done: {now}", logPath=logPath)
-    log(f"{'-'*80}", logPath=logPath)
+    log(string=f"Done: {now}", logPath=logPath, verbose=verbose)
+    log(string=f"{'-'*80}", logPath=logPath, verbose=verbose)
 
 #------------------------------------------------------------------------------
