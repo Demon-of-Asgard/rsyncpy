@@ -247,6 +247,24 @@ if __name__ == "__main__":
         if arg == "--verbose" or arg == "-v":
             verbose = True
         
+
+    for argId, arg in enumerate(sys.argv[:]):
+        if arg == "--viewlog":
+            
+            try:
+                with open(logPath, "r") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    print(line, end="")
+            
+                print()
+
+            except FileNotFoundError:
+                print("log file does not exist")
+            exit(0) 
+
+
     timeStampFolder = plib.Path("/".join(str(logPath).split("/")[:-1])) / "time_stamps"
 
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
