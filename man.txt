@@ -1,0 +1,16 @@
+
+----------------------------- [Usage] -----------------------------
+
+pyrsync --conf path/to/configfile --log path/to/logfile
+            OR
+pyrsync -c path/to/configfile -l path/to/logfile
+    Read config file from path/to/configfile and log to 
+    path/to/logfile
+
+pyrsync --verbose [options] OR pyrsync -v [options]
+    Enable verbose with options
+
+pyrsync
+    Read configs from the default path : ~/configs/sync_configs.yaml
+    and logs to default logfile: ~/logs/sync.log
+            

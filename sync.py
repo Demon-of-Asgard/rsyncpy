@@ -141,7 +141,12 @@ def rsync(
 
 #------------------------------------------------------------------------------
 
-def run_backup(configs:dict, logPath:plib.Path, verbose=False)->None:
+def run_backup(
+        configs:dict, 
+        logPath:plib.Path, 
+        verbose=False
+    )->None:
+
     assert isinstance(configs, dict), f"Variable 'configs' should be a dict"
     idNames:list = list(configs.keys())
 
@@ -172,8 +177,13 @@ def run_backup(configs:dict, logPath:plib.Path, verbose=False)->None:
 
 #------------------------------------------------------------------------------
 
-def main(configsPath:plib.Path, logPath:plib.Path, 
-         timeStampFolder:plib.Path, verbose=False)->None:
+def main(
+        configsPath:plib.Path, 
+        logPath:plib.Path, 
+        timeStampFolder:plib.Path, 
+        verbose=False
+    )->None:
+    
     configs = read_configs(configsPath=configsPath, 
                            logPath=logPath, 
                            verbose=verbose)
@@ -212,22 +222,24 @@ if __name__ == "__main__":
 
     for argId, arg in enumerate(sys.argv[:]):
         if arg == "--help" or arg == "-h":
-            usage = """
-            Usage:
-                pyrsync --conf path/to/configfile --log path/to/logfile
-                            OR
-                pyrsync -c path/to/configfile -l path/to/logfile
-                    Read config file from path/to/configfile and log to 
-                    path/to/logfile
-                pyrsync --verbose [options] OR pyrsync -v [options]
-                    Enable verbose with options
-                pyrsync
-                    Read configs from the default path : ~/configs/sync_configs.yaml
-                    and
-                    logs to default logfile: ~/logs/sync.log
-            """
-            print(usage)
+            manPath = plib.Path(
+                    "/".join(
+                    str(plib.Path(__file__).parent.resolve()).split("/")[:]
+                )
+            ) / "man.txt"
+            try:
+                with open(manPath, "r") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    print(line, end="")
+            
+                print()
+
+            except FileNotFoundError:
+                print("man file does not exist")
             exit(0) 
+
         if arg == "--conf" or arg == "-c":
             configsPath = plib.Path(sys.argv[argId + 1])
         if arg == "--log" or arg == "-l":
@@ -239,9 +251,19 @@ if __name__ == "__main__":
 
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
     
-    log(string=f"Starting: {now}", logPath=logPath, verbose=verbose)
-    main(configsPath=configsPath, logPath=logPath, 
-        timeStampFolder=timeStampFolder, verbose=verbose)
+    log(
+        string=f"Starting: {now}", 
+        logPath=logPath, 
+        verbose=verbose
+    )
+    
+    main(
+        configsPath=configsPath, 
+        logPath=logPath, 
+        timeStampFolder=timeStampFolder, 
+        verbose=verbose
+    )
+
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
     log(string=f"Done: {now}", logPath=logPath, verbose=verbose)
     log(string=f"{'-'*80}", logPath=logPath, verbose=verbose)
