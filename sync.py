@@ -33,10 +33,19 @@ def read_configs(
         verbose:bool=False
     )-> dict:
     configs:dict = {}
-    log(string=f"Reading congigs from {configsPath}", logPath=logPath, 
+
+    log(string=f"Reading configs from {configsPath}", logPath=logPath, 
         verbose=verbose,end="\t")
+    
     with open(configsPath, "r") as f:
-        configs.update(yml.load(f, Loader=yml.FullLoader))
+        try:
+            configs.update(yml.load(f, Loader=yml.FullLoader))
+        except Exception as E:
+            log(string=f"Error occured while reading {configsPath}", 
+                logPath=logPath, verbose=True)
+            for arg in E.args:
+                log(string=str(arg), logPath=logPath, verbose=True)
+
     log(string="Done!", logPath=logPath, verbose=verbose, end="\n")
     return configs
 
