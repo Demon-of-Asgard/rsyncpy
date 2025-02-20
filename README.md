@@ -7,8 +7,8 @@ Python script for using rsync to backup files and folders
 pyrsync [option(s)]
 
 If no options specified, script will read configs from the 
-default path at ~/configs/sync_configs.yaml and logs to default 
-logfile at ~/.data/logs/pyrsync/pyrsync.log
+default path at `~/configs/sync_configs.yaml` and logs to default 
+logfile at `~/.data/logs/pyrsync/pyrsync.log`
 
 [options]
 
