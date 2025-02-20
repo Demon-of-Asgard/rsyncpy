@@ -139,6 +139,8 @@ def rsync(
 
     log(string=result.stdout, logPath=logPath, verbose=verbose)
 
+    return None
+
 #------------------------------------------------------------------------------
 
 def run_backup(
@@ -177,7 +179,7 @@ def run_backup(
 
     level -= 1
 
-    return
+    return None 
 
 #------------------------------------------------------------------------------
 
@@ -201,7 +203,6 @@ def main(
                 minutes=configs[key]["every"]["minutes"],
                 seconds=configs[key]["every"]["seconds"],
             )
-
 
             log(string=f"synchronization delta: {every}", logPath=logPath, verbose=verbose)
             deltaTimeNow = check_lastsync_time(
@@ -228,7 +229,7 @@ def main(
             current_config = {key : configs[key]}
             run_backup(configs=current_config, logPath=logPath, verbose=verbose)
         
-    return 
+    return None
 
 #------------------------------------------------------------------------------
 
