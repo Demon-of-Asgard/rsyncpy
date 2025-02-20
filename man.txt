@@ -1,16 +1,33 @@
 
------------------------------ [Usage] -----------------------------
+                        [Usage]
 
-pyrsync --conf path/to/configfile --log path/to/logfile
+pyrsync [option(s)]
+
+If no options specified, script will read configs from the 
+default path at ~/configs/sync_configs.yaml and logs to default 
+logfile at ~/.data/logs/pyrsync/pyrsync.log
+
+[options]
+
+    To read config file from path/to/configfile and log to
+        --conf path/to/configfile 
             OR
-pyrsync -c path/to/configfile -l path/to/logfile
-    Read config file from path/to/configfile and log to 
-    path/to/logfile
+        -c path/to/configfile
 
-pyrsync --verbose [options] OR pyrsync -v [options]
+    To write log to  path/to/logfile
+        --log path/to/logfile
+            OR
+        -l path/to/logfile
+
+
     Enable verbose with options
+    --verbose 
+        OR 
+    -v 
 
-pyrsync
-    Read configs from the default path : ~/configs/sync_configs.yaml
-    and logs to default logfile: ~/logs/sync.log
-            
+    Display logs from default logfile if exist
+        --viewlog
+
+    Display logs from custom logfile if exist
+        --viewlog --log path/to/logfile
+
