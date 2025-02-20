@@ -148,30 +148,34 @@ def run_backup(
     )->None:
 
     assert isinstance(configs, dict), f"Variable 'configs' should be a dict"
-    idNames:list = list(configs.keys())
+    idName = list(configs.keys())[0]
 
-    offsetStr:str = "\t"
-    level:int = 0
-    for idName in idNames:
-        log(f"{offsetStr*level}{idName}", logPath=logPath, verbose=verbose)
-        level += 1
-        for key in ["src", "dst"]:
-            assert key in list(configs[idName].keys()), f"key {key} is missing in configs of {idName}"
-            log(f"{offsetStr*level}{key}: {configs[idName][key]}", logPath=logPath)
-        
-        src = plib.Path(configs[idName]['src'])
-        dst = plib.Path(configs[idName]['dst'])
+    log(f"", logPath=logPath, verbose=verbose)
+    log(f"{'-'*len(idName)}", logPath=logPath, verbose=verbose)
+    log(f"{idName}", logPath=logPath, verbose=verbose)
+    log(f"{'-'*len(idName)}", logPath=logPath, verbose=verbose)
 
-        assert src.exists(), f"{src} does not exist"
-        if not dst.exists(): dst.mkdir(parents=True, exist_ok=False)
+    offsetStr = "\t" 
+    level = 1
+    for key in ["src", "dst"]:
+        assert key in list(configs[idName].keys()), f"key {key} is missing in configs of {idName}"
+        log(f"{offsetStr*level}{key}: {configs[idName][key]}", logPath=logPath)
+    level -= 1
+    
+    
+    src = plib.Path(configs[idName]['src'])
+    dst = plib.Path(configs[idName]['dst'])
 
-        rsyncOpts = ["-avz"]
-        
-        rsync(source=src, destination=dst, 
-              options=rsyncOpts, logPath=logPath,
-              verbose=verbose)
+    assert src.exists(), f"{src} does not exist"
+    if not dst.exists(): dst.mkdir(parents=True, exist_ok=False)
 
-        level -= 1
+    rsyncOpts = ["-avz"]
+    
+    rsync(source=src, destination=dst, 
+            options=rsyncOpts, logPath=logPath,
+            verbose=verbose)
+
+    level -= 1
 
     return
 
@@ -204,12 +208,26 @@ def main(
                 syncTimesDir=timeStampFolder,
                 idName=key,
                 logPath=logPath,
-                verbose=True,
+                verbose=verbose,
             )
 
             if deltaTimeNow > every:
+                log(
+                    string=f"{deltaTimeNow=} resynchonizing: {deltaTimeNow > every}",
+                    logPath=logPath,
+                    verbose=verbose
+                )
                 current_config = {key : configs[key]}
                 run_backup(configs=current_config, logPath=logPath, verbose=verbose)
+        else:
+            log(
+                string=f"Resynchonizing: True",
+                logPath=logPath,
+                verbose=verbose
+            )
+            current_config = {key : configs[key]}
+            run_backup(configs=current_config, logPath=logPath, verbose=verbose)
+        
     return 
 
 #------------------------------------------------------------------------------
@@ -283,7 +301,8 @@ if __name__ == "__main__":
     )
 
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
-    log(string=f"Done: {now}", logPath=logPath, verbose=verbose)
-    log(string=f"{'-'*80}", logPath=logPath, verbose=verbose)
+    log(string=f"Done: {now}", logPath=logPath, verbose=True)
+    log(string=f"{'='*80}", logPath=logPath, verbose=verbose)
+    log(string=f"{'\n'*2}", logPath=logPath, verbose=verbose)
 
 #------------------------------------------------------------------------------
