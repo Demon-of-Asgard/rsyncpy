@@ -13,8 +13,19 @@ def log(
     )->None:
 
     fileMode = "a"
-    if not logPath.exists():
+
+    logDir = plib.Path(
+        "/".join(
+                str(logPath).split("/")[:-1]
+            )
+    )
+
+    try:
+        logDir.mkdir(parents=True, exist_ok=False)
         fileMode = "w"
+    except FileExistsError:
+        if not logPath.exists():
+            fileMode = "w"
 
     with open(logPath, fileMode) as f:
         f.write(f"{string}")
@@ -25,6 +36,58 @@ def log(
     
     return None
 
+#------------------------------------------------------------------------------
+
+def check_lastsync_time(
+        syncTimesDir:plib.Path,
+        idName:str,
+        logPath:plib.Path,
+        verbose=False,
+    )->dtm.timedelta:
+
+    currentTimePath = syncTimesDir / f"last_synctime_{idName}.yaml"
+
+    try:
+        syncTimesDir.mkdir(exist_ok=False)
+    except FileExistsError:
+        log(string=f"{syncTimesDir} already exists.", 
+            logPath=logPath,
+            verbose=verbose)
+        
+    if not currentTimePath.exists():
+        with open(currentTimePath, "w") as f:
+            now = dtm.datetime.now()
+            f.write(f"year: {now.year}\n")
+            f.write(f"month: {now.month}\n")
+            f.write(f"day: {now.day}\n")
+            f.write(f"hour: {now.hour}\n")
+            f.write(f"minute: {now.minute}\n")
+            f.write(f"second: {now.second}\n")
+
+        return now - now
+
+    else:
+        with open(currentTimePath, "r") as f:
+            lastSyncTime = yml.load(f, Loader=yml.FullLoader)
+        
+        with open(currentTimePath, "w") as f:
+            now = dtm.datetime.now()
+            f.write(f"year: {now.year}\n")
+            f.write(f"month: {now.month}\n")
+            f.write(f"day: {now.day}\n")
+            f.write(f"hour: {now.hour}\n")
+            f.write(f"minute: {now.minute}\n")
+            f.write(f"second: {now.second}\n")
+
+        return dtm.datetime.now() - dtm.datetime(
+            year=lastSyncTime["year"],
+            month=lastSyncTime["month"],
+            day=lastSyncTime["day"],
+            hour=lastSyncTime["hour"],
+            minute=lastSyncTime["minute"],
+            second=lastSyncTime["second"],
+        )
+        
 #------------------------------------------------------------------------------
 
 def read_configs(
@@ -109,19 +172,42 @@ def run_backup(configs:dict, logPath:plib.Path, verbose=False)->None:
 
 #------------------------------------------------------------------------------
 
-def main(configsPath:plib.Path, logPath:plib.Path, verbose=False)->None:
+def main(configsPath:plib.Path, logPath:plib.Path, 
+         timeStampFolder:plib.Path, verbose=False)->None:
     configs = read_configs(configsPath=configsPath, 
                            logPath=logPath, 
                            verbose=verbose)
-    run_backup(configs=configs, logPath=logPath, verbose=verbose)
+    
+    current_config:dict = {}
+    for key in configs.keys():
+        if configs[key]["every"]["set"]:
+            every=dtm.timedelta(
+                days=configs[key]["every"]["days"],
+                hours=configs[key]["every"]["hours"],
+                minutes=configs[key]["every"]["minutes"],
+                seconds=configs[key]["every"]["seconds"],
+            )
+
+
+            log(string=f"synchronization delta: {every}", logPath=logPath, verbose=verbose)
+            deltaTimeNow = check_lastsync_time(
+                syncTimesDir=timeStampFolder,
+                idName=key,
+                logPath=logPath,
+                verbose=True,
+            )
+
+            if deltaTimeNow > every:
+                current_config = {key : configs[key]}
+                run_backup(configs=current_config, logPath=logPath, verbose=verbose)
     return 
 
 #------------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    configsPath:plib.Path = plib.Path('~').expanduser() / "configs" / "sync_configs.yaml"
-    logPath:plib.Path = plib.Path('~').expanduser() / "logs" / "sync.log"
+    configsPath:plib.Path = plib.Path('~').expanduser() / "configs" / "pyrsync_configs.yaml"
+    logPath:plib.Path = plib.Path('~').expanduser() / ".data" / "logs" / "pyrsync" /"pyrsync.log"
     verbose:bool = False
 
     for argId, arg in enumerate(sys.argv[:]):
@@ -148,11 +234,14 @@ if __name__ == "__main__":
             logPath = plib.Path(sys.argv[argId + 1])
         if arg == "--verbose" or arg == "-v":
             verbose = True
+        
+    timeStampFolder = plib.Path("/".join(str(logPath).split("/")[:-1])) / "time_stamps"
 
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
     
     log(string=f"Starting: {now}", logPath=logPath, verbose=verbose)
-    main(configsPath=configsPath, logPath=logPath, verbose=verbose)
+    main(configsPath=configsPath, logPath=logPath, 
+        timeStampFolder=timeStampFolder, verbose=verbose)
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
     log(string=f"Done: {now}", logPath=logPath, verbose=verbose)
     log(string=f"{'-'*80}", logPath=logPath, verbose=verbose)
