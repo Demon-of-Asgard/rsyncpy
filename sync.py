@@ -245,7 +245,7 @@ def main(
 
 if __name__ == "__main__":
 
-    configsPath:plib.Path = plib.Path('~').expanduser() / "configs" / "pyrsync_configs.yaml"
+    configsPath:plib.Path = plib.Path('~').expanduser() / ".config" / "pyrsync_configs.yaml"
     logPath:plib.Path = plib.Path('~').expanduser() / ".data" / "logs" / "pyrsync" /"pyrsync.log"
     verbose:bool = False
 
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     )
 
     now = dtm.datetime.now().strftime("[%d-%m-%Y %H:%M:%S]")
-    log(string=f"Done: {now}", logPath=logPath, verbose=True)
+    log(string=f"Done: {now}", logPath=logPath, verbose=verbose)
     log(string=f"{'='*80}", logPath=logPath, verbose=verbose)
     log(string=f"{'\n'*2}", logPath=logPath, verbose=verbose)
 

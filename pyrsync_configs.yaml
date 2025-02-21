@@ -1,19 +1,19 @@
 ASPET_recon_outputs:
   src: /home/manu/Manu/ASPET_3ang/software/data/recon/3angle/OUTPUT
   dst: /media/manu/AS_IPC_backup/ASPET/
-  every: 
+  every: # Update every other
     set : True
     days:    0
-    hours:   0
-    minutes: 1
+    hours:   2
+    minutes: 0
     seconds: 0
 
 ASPET_recon_inputs:
   src: /home/manu/Manu/ASPET_3ang/software/data/recon/3angle/INPUT/
   dst: /media/manu/AS_IPC_backup/ASPET/
   every:
-    set: False
+    set: True
     days:    0
-    hours:   0
+    hours:   6
     minutes: 0
     seconds: 0
