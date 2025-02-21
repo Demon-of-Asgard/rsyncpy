@@ -38,6 +38,22 @@ def log(
 
 #------------------------------------------------------------------------------
 
+def update_timestamp(
+    timestampPath:plib.Path, 
+    now:dtm.datetime
+)->None:
+    with open(timestampPath, "w") as f:
+        now = dtm.datetime.now()
+        f.write(f"year: {now.year}\n")
+        f.write(f"month: {now.month}\n")
+        f.write(f"day: {now.day}\n")
+        f.write(f"hour: {now.hour}\n")
+        f.write(f"minute: {now.minute}\n")
+        f.write(f"second: {now.second}\n")
+    return
+
+#-------------------------------------------------------------------------------
+
 def check_lastsync_time(
         syncTimesDir:plib.Path,
         idName:str,
@@ -55,29 +71,16 @@ def check_lastsync_time(
             verbose=verbose)
         
     if not currentTimePath.exists():
-        with open(currentTimePath, "w") as f:
-            now = dtm.datetime.now()
-            f.write(f"year: {now.year}\n")
-            f.write(f"month: {now.month}\n")
-            f.write(f"day: {now.day}\n")
-            f.write(f"hour: {now.hour}\n")
-            f.write(f"minute: {now.minute}\n")
-            f.write(f"second: {now.second}\n")
-
+        now:dtm.datetime = dtm.datetime.now()
+        update_timestamp(
+            timestampPath=currentTimePath, 
+            now=now
+        )
         return now - now
 
     else:
         with open(currentTimePath, "r") as f:
             lastSyncTime = yml.load(f, Loader=yml.FullLoader)
-        
-        with open(currentTimePath, "w") as f:
-            now = dtm.datetime.now()
-            f.write(f"year: {now.year}\n")
-            f.write(f"month: {now.month}\n")
-            f.write(f"day: {now.day}\n")
-            f.write(f"hour: {now.hour}\n")
-            f.write(f"minute: {now.minute}\n")
-            f.write(f"second: {now.second}\n")
 
         return dtm.datetime.now() - dtm.datetime(
             year=lastSyncTime["year"],
@@ -168,6 +171,9 @@ def run_backup(
     src = plib.Path(configs[idName]['src'])
     dst = plib.Path(configs[idName]['dst'])
 
+    log(string=f"src={str(src)}", logPath=logPath, verbose=verbose)
+    log(string=f"dst={str(dst)}", logPath=logPath, verbose=verbose)
+
     assert src.exists(), f"{src} does not exist"
     if not dst.exists(): dst.mkdir(parents=True, exist_ok=False)
 
@@ -220,6 +226,10 @@ def main(
                 )
                 current_config = {key : configs[key]}
                 run_backup(configs=current_config, logPath=logPath, verbose=verbose)
+                update_timestamp(
+                    timestampPath=timeStampFolder / f"last_synctime_{key}.yaml", 
+                    now=dtm.datetime.now(),
+                )
         else:
             log(
                 string=f"Resynchonizing: True",
